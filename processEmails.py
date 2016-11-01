@@ -1,5 +1,5 @@
 
-import os, re, tarfile, subprocess
+import os, re, tarfile, subprocess, email
 
 
 def strip_html(file):
@@ -22,6 +22,9 @@ def strip_html(file):
 	stripped = re.sub(r" +", " ", stripped)
 	return stripped
 
+# def strip_html(data):
+# 	p = re.compile(r'<.*?>')
+# 	return p.sub('',data)
 
 
 def untar(file_path,path):
@@ -60,7 +63,7 @@ def processEmail(email_path):
 
 		for fl in file_list:
 			raw_html = open(fl, 'r', encoding="ISO-8859-1").read()
-			stripped_html = strip_html(raw_html)
+			email_content = email.message_from_string(raw_html)
 			try:
 				# create dirs for preprocess file
 				
@@ -71,7 +74,11 @@ def processEmail(email_path):
 				pass
 			finally:
 				f = open(re.sub(b"emails/",b"pre/" ,fl), 'w')
-				f.write(stripped_html)
+				if email_content.is_multipart():
+					for payload in email_content.get_payload():
+						f.write(strip_html(str(payload.get_payload())))
+				else:
+					f.write(strip_html(str(email_content.get_payload())))
 				f.close()
 				print('Finally')
 		print ('Done------')
